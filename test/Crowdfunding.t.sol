@@ -9,6 +9,17 @@ contract FactoryTest is Test {
     CrowdFunding crowdfunding;  
     Voting voting;
 
+    uint16 public constant WITHDRAW_FEE = 95;
+    uint16 public constant MAX_VOTINGS = 5;
+    uint256 constant public VOTE_VALUE = 10**6;
+
+    string constant name = "name";
+    string constant description = "description";    
+    uint256 constant target = 100000;
+    string constant categorie = "categorie";
+    uint256 constant timeLimit = 10304034;
+    string constant imageCid = "imageCid";
+
     function setUp() public {
         crowdfunding = new CrowdFunding();
         voting = new Voting();
@@ -16,9 +27,9 @@ contract FactoryTest is Test {
 
     modifier crowdfundingInitialized() {
         crowdfunding.initialize(
-            10000,
+            target,
             address(1),
-            10304034000,
+            timeLimit,
             address(voting)
         );
         _;
@@ -27,9 +38,9 @@ contract FactoryTest is Test {
 
     function testInitialize() public crowdfundingInitialized{
 
-        assertEq(crowdfunding.target(), 10000);
+        assertEq(crowdfunding.target(), target);
         assertEq(crowdfunding.contractOwner(), address(1));
-        assertEq(crowdfunding.closingDate(), 10304034000);
+        assertEq(crowdfunding.closingDate(), timeLimit);
         assertEq(crowdfunding.implementationContract(), address(voting));
         assertEq(crowdfunding.amountCollected(), 0);
         assertEq(crowdfunding.isCompleted(), false);
@@ -47,7 +58,7 @@ contract FactoryTest is Test {
         vm.startPrank(address(2));
         vm.deal(address(2), 1 ether);
 
-        crowdfunding.donate{value: 10000 }("message");
+        crowdfunding.donate{value: target }("message");
 
         vm.expectRevert("The crowdfunding is completed");
 
@@ -65,11 +76,11 @@ contract FactoryTest is Test {
         vm.startPrank(address(2));
         vm.deal(address(2), 1 ether);
 
-        crowdfunding.donate{value: 10000}("message");
+        crowdfunding.donate{value: target}("message");
 
-        assertEq(crowdfunding.amountCollected(), 10000);
+        assertEq(crowdfunding.amountCollected(), target);
         assertEq(crowdfunding.isCompleted(), true);
-        assertEq(crowdfunding.donations(address(2)), 10000);
+        assertEq(crowdfunding.donations(address(2)), target);
         assertEq(crowdfunding.percentage(address(2)), 100);
     }
 
@@ -77,7 +88,7 @@ contract FactoryTest is Test {
         vm.startPrank(address(2));
         vm.deal(address(2), 1 ether);
 
-        crowdfunding.donate{value: 10000}("message");
+        crowdfunding.donate{value: target}("message");
 
         vm.expectRevert("The crowdfunding is completed");
 
@@ -111,7 +122,7 @@ contract FactoryTest is Test {
 
         crowdfunding.donate{value: 100}("message");
 
-        uint256 penaltyAmount = (100 * 95) / 100;
+        uint256 penaltyAmount = (100 * WITHDRAW_FEE) / 100;
         uint256 feeAmount = 100 - penaltyAmount;
 
         crowdfunding.withdrawUser();
@@ -140,15 +151,15 @@ contract FactoryTest is Test {
 
     function testOwnerCanWithdrawIfTheTargetIsPassed() public crowdfundingInitialized{
         vm.startPrank(address(2));
-        vm.deal(address(2), 20000);
+        vm.deal(address(2), 200000);
 
-        crowdfunding.donate{value: 10000}("message");
+        crowdfunding.donate{value: target}("message");
 
         vm.stopPrank();
         vm.startPrank(address(1));
         crowdfunding.withdrawOwner();
 
-        assertEq(address(1).balance, 10000);
+        assertEq(address(1).balance, target);
         assertEq(crowdfunding.amountCollected(), 0);
     }
 
@@ -185,7 +196,7 @@ contract FactoryTest is Test {
         vm.startPrank(address(2));
         vm.deal(address(2), 1 ether);
 
-        crowdfunding.donate{value: 10000}("message");
+        crowdfunding.donate{value: target}("message");
 
         vm.expectRevert("The crowdfunding is completed");
 
@@ -201,35 +212,12 @@ contract FactoryTest is Test {
         crowdfunding.createVoting("test");
     }
 
-    function testCantVoteIfThePairIsNotValid() public crowdfundingInitialized {
-        vm.startPrank(address(1));
-        vm.expectRevert("The voting doesn't exist");
-        crowdfunding.vote(1, address(1));
-    }
-
-    function testCantVoteIfDontDonate() public crowdfundingInitialized {
-        vm.startPrank(address(1));
-        vm.expectRevert("You're not allowed to vote");
-        address pair = crowdfunding.createVoting("test");
-        crowdfunding.vote(1, pair);
-    }
-
-    function testCantVoteIfCrowdfundingHasExpired() public crowdfundingInitialized {
-        vm.startPrank(address(1));
-        address pair = crowdfunding.createVoting("test");
-        vm.startPrank(address(2));
-        vm.deal(address(2), 1 ether);
-        crowdfunding.donate{value: 100}("message");
-        vm.expectRevert("The voting is close");
-        vm.warp(20304034000);
-        crowdfunding.vote(1, pair);
-    }
-
     function testCreatesVotingAndVote() public crowdfundingInitialized {
         vm.startPrank(address(1));
         address pair = crowdfunding.createVoting("test");
 
         vm.assume(pair != address(0));
+    
         assertEq(crowdfunding.votingContracts(0), pair);
 
         Voting _voting = Voting(pair);
@@ -238,7 +226,6 @@ contract FactoryTest is Test {
         assertEq(_voting.yesVotes(), 0);
         assertEq(_voting.noVotes(), 0);
         vm.assume(_voting.timeLimit() > block.timestamp);
-        assertEq(_voting.hasEnded(), false);
         assertEq(_voting.owner(), address(1));
 
         vm.startPrank(address(2));
@@ -247,7 +234,76 @@ contract FactoryTest is Test {
         crowdfunding.vote(1, pair);
         
         assertEq(_voting.votes(), 1);
-        assertEq(_voting.yesVotes(), 100 * 10**6);
+        assertEq(_voting.yesVotes(), 100 * VOTE_VALUE);
+    }
+
+    function testCantVoteIfThePairIsNotValid() public crowdfundingInitialized {
+        vm.startPrank(address(1));
+        vm.expectRevert("The voting doesn't exist");
+        crowdfunding.vote(1, address(1));
+    }
+
+    function testCantVoteIfDontDonate() public crowdfundingInitialized {
+        vm.startPrank(address(1));
+        address pair = crowdfunding.createVoting("test");
+
+        vm.startPrank(address(2));
+        vm.expectRevert("You're not allowed to vote");
+        crowdfunding.vote(1, pair);
+    }
+
+
+    function testCantVoteIfCrowdfundingHasExpired() public crowdfundingInitialized {
+        vm.startPrank(address(1));
+        address pair = crowdfunding.createVoting("voting");
+        vm.stopPrank();
+        vm.startPrank(address(2));
+        vm.deal(address(2), 1 ether);
+        crowdfunding.donate{value: 1000}("message");
+        vm.warp(20304034000);
+        vm.expectRevert("The voting is close");
+        crowdfunding.vote(1, pair);
+    }
+
+    function testCantVoteIfNumberIsInvalid() public crowdfundingInitialized {
+        vm.startPrank(address(1));
+        address pair = crowdfunding.createVoting("voting");
+        vm.stopPrank();
+        vm.startPrank(address(2));
+        vm.deal(address(2), 1 ether);
+        crowdfunding.donate{value: 1000}("message");
+        vm.expectRevert("Invalid vote");
+        crowdfunding.vote(2, pair);
+    }
+
+    function testCantVoteTwice() public crowdfundingInitialized {
+        vm.startPrank(address(1));
+        address pair = crowdfunding.createVoting("voting");
+        vm.stopPrank();
+        vm.startPrank(address(2));
+        vm.deal(address(2), 1 ether);
+        crowdfunding.donate{value: 1000}("message");
+        crowdfunding.vote(1, pair);
+        vm.expectRevert("You already voted");
+        crowdfunding.vote(1, pair);
+    }
+
+    function testVote() public crowdfundingInitialized {
+        vm.startPrank(address(1));
+        address pair = crowdfunding.createVoting("voting");
+        vm.stopPrank();
+        vm.startPrank(address(2));
+        vm.deal(address(2), 1 ether);
+        crowdfunding.donate{value: 1000}("message");
+        crowdfunding.vote(1, pair);
+
+        assertEq(crowdfunding.hasVoted(address(2), pair), true);
+
+        Voting _voting = Voting(pair);
+
+        assertEq(_voting.votes(), 1);
+        assertEq(_voting.yesVotes(), 100 * VOTE_VALUE);
+        
     }
 
 }

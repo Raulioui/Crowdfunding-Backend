@@ -11,6 +11,13 @@ contract FactoryTest is Test {
     address crowdfunding;  
     address voting;
 
+    string constant name = "name";
+    string constant description = "description";    
+    uint256 constant target = 100000;
+    string constant categorie = "categorie";
+    uint256 constant timeLimit = 10304034;
+    string constant imageCid = "imageCid";
+
     event fundingContractCreated (
         address indexed pair,
         address indexed owner,
@@ -33,12 +40,12 @@ contract FactoryTest is Test {
         vm.expectRevert("Insuficient target");
 
         factory.createCrowdFunding(
-            "name",
-            "description",
+            name,
+            description,
             0,
-            "categorie",
-            10304034000,
-            "imageCid"
+            categorie,
+            timeLimit,
+            imageCid
         );
     }
 
@@ -47,15 +54,13 @@ contract FactoryTest is Test {
         vm.deal(address(1), 1 ether);
 
         (address pair) = factory.createCrowdFunding(
-            "nam",
-            "desc",
-            100000,
-            "cat",
-            10304034,
-            "image"
+            name,
+            description,
+            target,
+            categorie,
+            timeLimit,
+            imageCid
         );
-
-       // CrowdFunding proxy = new CrowdFunding(pair);
         
         vm.assume(pair != address(0));
 
@@ -63,19 +68,13 @@ contract FactoryTest is Test {
 
         uint256 FROM_GWEI_TO_WEI = 1e9;
 
-        assertEq(proxy.target(), 100000 * FROM_GWEI_TO_WEI);
+        assertEq(proxy.target(), target * FROM_GWEI_TO_WEI);
         assertEq(proxy.amountCollected(), 0);
         assertEq(proxy.contractOwner(), address(1));
         assertEq(proxy.isCompleted(), false);
-        assertEq(proxy.closingDate(), 10304034);
+        assertEq(proxy.closingDate(), timeLimit);
         assertEq(proxy.implementationContract(), voting);
 
         vm.stopPrank();
-        vm.startPrank(address(2));
-        vm.deal(address(2), 1 ether);
-
-        proxy.donate{value: 1000 wei}("Helloooo");
-        assertEq(proxy.amountCollected(), 1000);
-        vm.stopPrank(); 
     }
 }

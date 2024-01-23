@@ -10,7 +10,6 @@ contract Voting is Initializable {
     uint256 public yesVotes;
     uint256 public noVotes;
     uint256 public timeLimit;  
-    bool public hasEnded;
     address public owner;
 
     address public crowdfundingContract;
@@ -21,14 +20,7 @@ contract Voting is Initializable {
         uint256 noVotes
     );
 
-    event VotingEnded(
-        address pair,
-        uint256 votes,
-        uint256 yesVotes,
-        uint256 noVotes
-    );
-
-    uint256 constant private VOTE_VALUE = 10**6;
+    uint256 constant public VOTE_VALUE = 10**6;
 
     mapping(address => bool) public hasVoted;
 
@@ -40,7 +32,6 @@ contract Voting is Initializable {
         yesVotes = 0;
         noVotes = 0;
         owner = _owner;
-        hasEnded = false;
         timeLimit = block.timestamp + 1 days;
         crowdfundingContract = _crowdfundingContract;
     }
@@ -60,13 +51,4 @@ contract Voting is Initializable {
         emit Voted(votes, yesVotes, noVotes);
     }
 
-
-    function closeVoting() external  {
-        require(msg.sender == owner, "You are not the owner");
-        require(block.timestamp >= timeLimit, "The voting has not ended");
-        require(hasEnded == false, "You already close the voting");
-
-        emit VotingEnded(address(this), votes, yesVotes, noVotes);
-        hasEnded = true;
-    }
 }

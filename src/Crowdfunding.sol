@@ -9,6 +9,7 @@ pragma solidity 0.8.20;
 // IMPLEMENTAR TOKENS RECOMENSA
 contract CrowdFunding is Initializable  {
     uint16 public constant WITHDRAW_FEE = 95;
+    uint16 public constant MAX_VOTINGS = 5;
 
     address public contractOwner;
     uint256 public target;
@@ -52,7 +53,8 @@ contract CrowdFunding is Initializable  {
     event VotingCreated(
         address indexed pair,
         string message,
-        address votingContract
+        address votingContract,
+        uint256 closingDate
     );
 
     function initialize(
@@ -124,33 +126,35 @@ contract CrowdFunding is Initializable  {
         emit UserWithdraw(msg.sender, penaltyAmount, amountCollected);
     }
 
-    function createVoting(string memory message) external returns (address pair){
-        require(msg.sender == contractOwner, "You are not the owner");
-        require(!isCompleted, "The crowdfunding is completed");
-        require(votingContracts.length < 6, "You can't create more votings");
-
-        pair = address(new Proxy(implementationContract));
-        (bool success, ) = pair.call(abi.encodeWithSignature("initialize(address,address)", contractOwner, address(this)));
-        require(success, "Failed to initialize");
-        votingContracts.push(pair);
-        votingTarget[pair] = block.timestamp + 1 days;
-        emit VotingCreated(address(this), message, pair);
-    } 
-
     function _withdrawOwner(uint256 _amountCollected) internal {
         amountCollected = 0;
         isCompleted = true;
 
-        (bool success, ) = (msg.sender).call{value: _amountCollected}("");
+        (bool success, ) = (contractOwner).call{value: _amountCollected}("");
         require(success, "Failed withdrawing");
             
         emit WithdrawCompleted(msg.sender, _amountCollected, address(this));
     }
 
+    function createVoting(string memory message) external returns (address pair){
+        require(msg.sender == contractOwner, "You are not the owner");
+        require(!isCompleted, "The crowdfunding is completed");
+        require(votingContracts.length <= MAX_VOTINGS, "You can't create more votings");
+
+        pair = address(new Proxy(implementationContract));
+        votingContracts.push(pair);
+        votingTarget[pair] = block.timestamp + 1 days;
+
+        (bool success, ) = pair.call(abi.encodeWithSignature("initialize(address,address)", contractOwner, address(this)));
+        require(success, "Failed to initialize");
+
+        emit VotingCreated(address(this), message, pair, votingTarget[pair]);
+    } 
+
     function vote(uint8 userVote, address votingPair) external {
         require(votingTarget[votingPair] != 0, "The voting doesn't exist");
         require(donations[msg.sender] > 0, "You're not allowed to vote");
-        require(msg.sender != contractOwner, "The owner is not allowed to vote");
+        // The owner can't donate so it's not necessary to check if the owner has voted
         require(block.timestamp < votingTarget[votingPair], "The voting is close");
         require(userVote <= 1, "Invalid vote");
         bool isVoted = hasVoted[msg.sender][votingPair];
