@@ -1,37 +1,36 @@
-"use client"
+
 import crowdfundingAbi from "../../utils/Crowdfunding.json"
 import votingAbi from "../../utils/Voting.json"
 import { useEffect, useState } from "react"
 import { ethers } from "ethers"
 import { useNotification } from '@web3uikit/core';
 import { CircularProgress } from "@mui/material";
+import Countdown from 'react-countdown';
 
-// Poner la cuenta atras : añadir el block.timestamp al evento
-// Mostrar si ya ha votado el usuario
-export default function VotingComponent({owner, pair, message, crowdfundingContract}) {
-    const [loading, setLoading] = useState(false)
+export default function VotingComponent({owner, pair, message, crowdfundingContract, timeLimit}) {
+    const [loading, setLoading] = useState(true)
     const dispatch = useNotification()
     const [votes, setVotes] = useState([])
     const [totalVotes,  setTotalVotes] = useState(0)
+    const [date, setDate] = useState()
 
     async function getVotingData() {
-        setLoading(true)
+        
         const newProvider = new ethers.providers.WebSocketProvider("wss://eth-sepolia.g.alchemy.com/v2/jJIBH9hHaXDMrtMz5YWJlQvBSTb_aMnk")
         const contractProvider = new ethers.Contract(pair, votingAbi, newProvider)
         
         const filterDonations = contractProvider.filters.Voted()
         const eventsVotes = await contractProvider.queryFilter(filterDonations)
-
+        const votePercentage = Math.trunc(Number(eventsVotes[eventsVotes.length - 1]?.args[1]) / ((Number(eventsVotes[eventsVotes.length - 1]?.args[1]) + Number(eventsVotes[eventsVotes.length - 1]?.args[2]))) * 100)
+        setDate(new Date(timeLimit * 1000).getTime())
         setVotes(eventsVotes)
-        setTotalVotes((Number(eventsVotes[eventsVotes.length - 1]?.args[1]) / ((Number(eventsVotes[eventsVotes.length - 1]?.args[1]) + Number(eventsVotes[eventsVotes.length - 1]?.args[2]))) * 100))  
-        setLoading(false)
+        setTotalVotes(votePercentage.toString())
     }
 
     useEffect(() => {
         getVotingData()
+        setLoading(false)
     },[])
-
-    console.log(totalVotes)
 
     async function vote(vote) {
         setLoading(true)
@@ -39,11 +38,9 @@ export default function VotingComponent({owner, pair, message, crowdfundingContr
 		await provider.send("eth_requestAccounts", []);
 		const signer = provider.getSigner();
         
-  
  		const contractInstance = new ethers.Contract (
 		  crowdfundingContract, crowdfundingAbi, signer
 		);
-		console.log(contractInstance)
 		
 	 	const tx = await contractInstance.vote(vote, pair, {gasLimit: 1000000})
 		await tx.wait(1)
@@ -69,11 +66,12 @@ export default function VotingComponent({owner, pair, message, crowdfundingContr
                     <CircularProgress color="secondary" size={60}/>
                 </div>
             ) : (
-                <div className="w-full rounded-lg mb-12 p-4 bg-[#b2cffe] m-auto flex flex-col items-center gap-4 my-8  text-center">
-
+                <div className="w-full rounded-lg mb-12 p-6 bg-[#b2cffe] m-auto flex flex-col items-center gap-4 my-8  text-center">
+  
                     <div>
-                        <h3 className="font-bold">{message}</h3>
+                        <h3 className="font-bold mb-2">{message}</h3>
                         <p>Votes: {votes?.length}</p>
+                        <p>Ends in: {date && <Countdown date={date}/> }</p>
                     </div>
 
 
@@ -83,15 +81,21 @@ export default function VotingComponent({owner, pair, message, crowdfundingContr
                     </div> 
 
                     {votes?.length == 0 ? (
-                        <div className="w-[200px] sm:w-[300px] sm:w-[300px] xl:w-[600px] h-[10px] rounded-full bg-zinc-600"></div>
+                        <div className="w-[200px] sm:w-[300px] sm:w-[300px] xl:w-[600px] h-[8px] rounded-full bg-zinc-600"></div>
                     ) : (
                         <div className="w-[200px] sm:w-[300px] xl:w-[600px] h-[10px] rounded-full bg-red-700">
-                            <div className={`h-[10px] rounded-full w-[${totalVotes && totalVotes}%] bg-green-600`}></div>
+                            <div className={`h-[10px] rounded-full w-[${totalVotes}%] bg-green-600`}></div>
+                            <div className="justify-center flex items-center gap-4">
+                                <p>Yes: {totalVotes}%</p>
+                                <p>No: {100 - totalVotes}%</p>
+                            </div>
                         </div>
+                        
                     
                     )}
                 </div>
-            )}
+                
+            )}            
         </div>
     )
 }

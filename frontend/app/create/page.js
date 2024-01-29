@@ -6,11 +6,11 @@ import Looks5OutlinedIcon from '@mui/icons-material/Looks5Outlined';
 import LooksTwoOutlinedIcon from '@mui/icons-material/LooksTwoOutlined';
 import LooksOneOutlinedIcon from '@mui/icons-material/LooksOneOutlined';
 import {Input} from "@web3uikit/core"
-import {categories} from "../../utils/categories"
+import {categories} from "../../utils/constants"
 import { useEffect } from 'react';
 import { useNotification } from '@web3uikit/core';
 import { ethers } from "ethers";
-import uploadImageToIpfs from "../../utils/uploadImageToIpfs"
+import uploadImageToIPFS from "../../utils/uploadImageToIPFS"
 import { useRouter } from 'next/navigation'
 import factoryAbi from "../../utils/Factory.json"
 import { CircularProgress } from "@mui/material";
@@ -29,8 +29,8 @@ export default function CreateCrowdFundingModal() {
 	const [description, setDescription] = useState("");
 	const [target, setTarget] = useState("");
 	const [categorie, setCategorie] = useState("");
-
 	const [conversion, setConversion] = useState(0)
+	
     const [eth, setEth] = useState(0)
 	const [date, setDate] = useState(null)
 
@@ -43,13 +43,12 @@ export default function CreateCrowdFundingModal() {
         fetch("https://api.coincap.io/v2/assets/ethereum", requestOptions)
           .then(res => res.json())
           .then(dat => setConversion(dat?.data.priceUsd))
-	
-    },[])  
+    },[])
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 		setUploading(true)
-		const imageCid = await uploadImageToIpfs(file)
+		const imageCid = await uploadImageToIPFS(file)
 		const _date = new Date(date)
 		const  timeLimit = Math.floor(_date.getTime() / 1000);
 	
@@ -63,8 +62,6 @@ export default function CreateCrowdFundingModal() {
 			timeLimit: timeLimit,
 			imageCid: imageCid
 		};
-
-		console.log(crowdfunding)
 		
 		await createCrowdfunding(crowdfunding)
 
@@ -78,18 +75,15 @@ export default function CreateCrowdFundingModal() {
 	   } 
 	};
 
-	function fromDolToEth(dol) {
-		setEth(dol * conversion)
-	}
+
 
 	async function createCrowdfunding({name, description, target, categorie, timeLimit, imageCid}) {
 		const provider = new ethers.providers.Web3Provider(window.ethereum);
 		await provider.send("eth_requestAccounts", []);
 		const signer = provider.getSigner();
 		const contractInstance = new ethers.Contract (
-		  "0x5bbeD99F77b34538aC3C319c549Bb665B2E22e87", factoryAbi, signer
+		  "0xDE9934f7BC869dA20EAF63e28485c2112BEaEbdA", factoryAbi, signer
 		);
-		console.log("Creating...")
 		
 		const tx = await contractInstance.createCrowdFunding(name, description, target, categorie, timeLimit, imageCid)
 		await tx.wait(1)
@@ -100,23 +94,30 @@ export default function CreateCrowdFundingModal() {
 				title: "Created",
 				position: "topR",
 			})
-			router.push("/home")
+			router.push("/")
 		} else {
 			throw new Error("Failed creating the crowdfunding")
 		}
-		console.log(tx)
+	}
+
+	function fromDolToEth(dol) {
+		setEth(dol * conversion)
 	}
 
 	return (
-		<div>
+		<div className="">
 			{uploading ? (
 				<div className="flex items-center justify-center mt-[300px]">
 					<CircularProgress color="secondary" size={60}/>
 				</div>
 			) : (
-			<div className="p-12 ">
-				<form onSubmit={handleSubmit} >
-					<div className="mt-12">
+			<div className="flex flex-col p-6  items-center md:flex-row justify-between ">
+				<div className="block text-center md:text-left md:fixed top-[30%] left-20 w-full md:w-[25%]">
+					<h2 className="mb-12 text-4xl font bold">Let's begin your fundraising jounery!</h2>
+					<p>We're here to guide you every step of the way.</p>
+				</div>
+				<form onSubmit={handleSubmit} className="pb-8 w-[80%]  md:absolute top-0 right-0 float-right">
+					<div className="mt-12 ">
 
 						<div className="flex items-center justify-center gap-4 mb-8">
 							<LooksOneOutlinedIcon fontSize='large'/>
@@ -187,15 +188,15 @@ export default function CreateCrowdFundingModal() {
 			
 							</div>
 			
-							<div className='flex items-center justify-center gap-4 mt-8'>
+							<div className='flex items-center justify-center gap-4 mb-12  mt-12'>
 								<Looks4OutlinedIcon fontSize='large'/>
-								<h2 className='font-bold text-xl'>Categories</h2>
+								<h2 className='font-bold text-xl '>Categories</h2>
 							</div>
 			
-							<div className='flex mb-8 flex-wrap items-center justify-center gap-8 w-full m-auto mt-8 max-w-[70%]'>
-								{categories.map(c => {
+							<div className='flex mb-8 flex-wrap items-center justify-center gap-8 w-full m-auto max-w-[70%] '>
+								{categories?.map(c => {
 								return (
-								<div className="w-[90px] md:w-[130px]">
+								<div key={c.down} className="w-[90px] md:w-[130px]">
 									<input type="radio" required id={c.down} name="hosting" value={c.down} className="hidden peer" onChange={(e) => setCategorie(e.target.value)}/>
 									<label for={c.down} className="flex items-center justify-center px-4 py-2 text-white bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-white dark:border-gray-700 dark:peer-checked:text-white peer-checked:border-[#B12121] peer-checked:text-[#333232] hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-[#0C0C0E] dark:hover:bg-[#141313]">
 										<div className="block">
@@ -207,7 +208,7 @@ export default function CreateCrowdFundingModal() {
 								})}
 							</div>
 						
-							<div className="mb-12 flex items-center justify-center">
+							<div className="mb-12 flex items-center justify-center mt-16">
 								<DemoContainer components={['DateCalendar']}>
 									<DemoItem label="Select the time limit">
 										<DateCalendar disablePast={true} value={date} onChange={(newValue) => setDate(newValue)} />
@@ -220,7 +221,7 @@ export default function CreateCrowdFundingModal() {
 								<h2 className='font-bold text-xl'>Choose an image</h2>
 							</div>
 			
-							<div class="flex flex-col relative items-center justify-center py-8 font-sans w-[50%] m-auto mt-8">
+							<div class="flex flex-col relative items-center justify-center py-8 font-sans w-full md:w-[50%] m-auto mt-8">
 			
 							<label for="dropzone-file" class="absolute top-0 left-0 cursor-pointer flex w-full flex-col items-center rounded-xl border-2 border-dashed border-blue-400  p-6 h-full text-center"/>
 							<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -235,7 +236,7 @@ export default function CreateCrowdFundingModal() {
 							</div>
 			
 							<div className="w-full mt-12 flex items-center justify-center">
-								<button type='submit' className='border border-[#3472D8] font-bold px-8 bg-transparent  rounded-md  py-4 m-2 transition duration-500 ease select-none hover:bg-green-600 focus:outline-none focus:shadow-outline w-[15%]'>
+								<button type='submit' className='border border-[#3472D8] font-bold px-8 bg-transparent  rounded-md  py-4 m-2 transition duration-500 w-[150px] md:w-[300px] ease select-none hover:bg-green-600 focus:outline-none focus:shadow-outline w-[15%]'>
 									Send
 								</button>
 							</div>

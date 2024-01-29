@@ -9,9 +9,12 @@ import { CircularProgress, colors } from '@mui/material'
 import VotingComponent from "./VotingComponent"
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import { pink } from '@mui/material/colors';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Diversity1RoundedIcon from '@mui/icons-material/Diversity1Rounded';
 import Modal from '@mui/material/Modal';
+import Link from 'next/link'
 
 function CustomTabPanel(props) {
     const { children, value, index } = props;
@@ -40,14 +43,13 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
     const [donation, setDonation] = useState(0)
     const [donationMessage, setDonationMessage] = useState('')
     const [donationInDol, setDonationInDol] = useState(0)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [isCompleted, setIsCompleted] = useState(false)
     const [showModal, setShowModal] = useState(false)
-
     const [votingMessage, setVotingMessage] = useState('')
-    const [file, setFile] = useState("");
     const [_date, _setDate] = useState(null)
     const [percentage, setPercentage] = useState(0)
+    const [value, setValue] = useState(0);
 
     const dispatch = useNotification()
 
@@ -55,8 +57,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
         method: 'GET',
         redirect: 'follow'
     }
-
-    const [value, setValue] = useState(0);
 
     const handleChange = (event, newValue) => {
       setValue(newValue);
@@ -76,18 +76,16 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
             return total + Number(item?.args[1])
         }, 0)
 
-        console.log(votings)
-
         const amountWithdrawedInEther = ethers.utils.formatUnits(amountWithdrawed.toString(), "gwei")
         const amountInEther = ethers.utils.formatUnits(amount.toString(), "gwei")
 
         setAmountRaised(Number(amountInEther) - Number(amountWithdrawedInEther))
         const date = new Date(timeLimit * 1000)
         setDate(date.toDateString())
-        setPercentage(Math.trunc((Number(amountRaised) / Number(target)) * 100))
+        const perc = Math.trunc((Number(amountRaised) / Number(target)) * 100)
+        setPercentage(perc.toString())
+        setLoading(false)
     },[amountRaised, donations])
-
-    console.log(donations)
 
     async function donate(e) {
         e.preventDefault()
@@ -95,11 +93,11 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
         const provider = new ethers.providers.Web3Provider(window.ethereum);
 		await provider.send("eth_requestAccounts", []);
 		const signer = provider.getSigner();
+       
   
  		const contractInstance = new ethers.Contract (
 		  pair, crowdfundingAbi, signer
 		);
-		console.log(donationMessage)
 		
 	 	const tx = await contractInstance.donate(donationMessage, {gasLimit: 1000000, value: ethers.utils.parseUnits(donation.toString(), "gwei")})
 		await tx.wait(1)
@@ -115,7 +113,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
             setLoading(false)
 			throw new Error("Failed donating")
 		}
-		console.log(tx) 
         setLoading(false)
         setDonation(0)
         setDonationInDol(0)
@@ -130,7 +127,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
  		const contractInstance = new ethers.Contract (
 		  pair, crowdfundingAbi, signer
 		);
-		console.log("Creating")
 		
 	 	const tx = await contractInstance.withdrawUser()
 		await tx.wait(1)
@@ -146,7 +142,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
 		} else {
 			throw new Error("Failed withdrawing")
 		}
-		console.log(tx) 
         setLoading(false)
     }
 
@@ -159,7 +154,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
    		const contractInstance = new ethers.Contract (
 		  pair, crowdfundingAbi, signer
 		);
-		console.log(votingMessage)
 		
 	 	const tx = await contractInstance.createVoting(votingMessage)
 		await tx.wait(1)
@@ -174,7 +168,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
 		} else {
 			throw new Error("Failed creating the crowdfunding")
 		}
-		console.log(tx)   
         setLoading(false)
     }
     
@@ -187,7 +180,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
  		const contractInstance = new ethers.Contract (
 		  pair, crowdfundingAbi, signer
 		);
-		console.log("Creating")
 		
 	 	const tx = await contractInstance.withdrawOwner()
 		await tx.wait(1)
@@ -206,8 +198,6 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
         setLoading(false)
     }
 
-    console.log(percentage)
-
     return(
         <div>
             {loading ? (
@@ -220,6 +210,15 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
                         <p>This crowdfunding is completed</p>
                     ) : (
                         <section className="w-[95%]  p-8 text-[#333333] m-auto md:w-[80%] xl:w-[60%]">
+                        
+                        <div className="text-center">
+                            <Link href="/">
+                                <Diversity1RoundedIcon 
+                                    sx={{ fontSize: 60, color: pink[300] }}
+                                />
+                            </Link>
+                        </div>
+
                         <Box sx={{ borderBottom: 1, borderColor: 'divider'}}>
                             <Tabs sx={{color: "black"}} value={value} onChange={handleChange} aria-label="basic tabs example">
                                 <Tab  label="Campaing"  />
@@ -243,13 +242,14 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
 
                                 <div className='xl:fixed top-10 right-6 xl:right-10 xl:w-[20%]'>
                                     <div>
-                                        <p>{amountRaised.toFixed(4)} raised of {Number(target).toFixed(4)} ethers</p>
+                                        <p>{amountRaised.toFixed(4)} raised of {Number(target).toFixed(4)} ethers ({percentage}%)</p>
                                         <div className='w-full h-[14px]  mt-4 border-2 rounded-full bg-gray-400'>
-                                            <div className={`bg-[#02A95C] h-full rounded-full w-[${donations && percentage}%]`}></div>
+                                            <div className={`w-[${percentage}%] bg-[#02A95C] h-full rounded-full `}></div>
+                                            
                                         </div>
                                         
                                     </div>
-                                    <form onSubmit={donate}>
+                                    <form className='text-center' onSubmit={donate}>
                                         <div>
                                             <input 
                                                 type="text" 
@@ -263,10 +263,11 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
                                             />
                                             <p>{donationInDol.toFixed(2)} $</p>
                                         </div>
-                                        <input type="text" onClick={(e) => setDonationMessage(e.target.value)} placeholder="Message" required className='w-full h-10 border-2 border-[#FF80AC] rounded-lg mt-8 mb-4 p-2'/>
-                                        <button type="submit" className='w-full h-10 bg-[#FF80AC] rounded-lg font-bold text-white mt-4'>Donate</button>
+                                        <input type="text" onChange={(e) => setDonationMessage(e.target.value)} placeholder="Message" required className='w-full h-10 border-2 border-[#FF80AC] rounded-lg mt-8 mb-4 p-2'/>
+                                        <button type="submit" className='w-full m-auto h-10 bg-[#FF80AC] rounded-lg font-bold text-white mt-4 max-w-[300px]'>Donate</button>
+                                        <button onClick={withdraw} type="button" className='w-full  mt-4 h-10 bg-[#FF80AC] font-bold rounded-lg max-w-[300px] text-white'>Withdraw</button>
                                     </form>
-                                    <button onClick={withdraw} type="button" className='w-full mt-4 h-10 bg-[#FF80AC] font-bold rounded-lg text-white'>Withdraw</button>
+                                   
                                 </div>
                             </div>
 
@@ -288,7 +289,7 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
                             <div className=''>
                                 {donations?.map((d) => {
                                     return(
-                                        <div className='flex-col md:flex-row md:flex  gap-8 mb-14 text-center'>
+                                        <div key={d?.args[1]} className='flex-col md:flex-row md:flex  gap-8 mb-14 text-center'>
                                             <Jazzicon diameter={50} seed={jsNumberForAddress(d?.args[0])} />
                                             <div className='flex flex-col gap-2 text-center'>
                                                 <p>{d?.args[0]} donate {Number(d?.args[2]) / 1000000000} ethers</p>
@@ -320,18 +321,25 @@ export default function CrowdfundingComponent({categorie, description, imageCid,
                                
                             </div>
                             <div>
-                                {votings?.map((v) => {
-                                    return (
-                                        <VotingComponent 
-                                            key={v?.args[2]}
-                                            owner={v?.args[0]}
-                                            pair={v?.args[2]}
-                                            imageCid={v?.args[3]}
-                                            message={v?.args[1]}
-                                            crowdfundingContract={pair}
-                                        />
-                                    )
-                                })}
+
+                                {votings?.length == 0 ? (
+                                    <p className='text-xl text-center mt-12 font-bold'>There're no current votings</p>
+                                ) : (
+                                    <div>
+                                    {votings?.map((v) => {
+                                        return (
+                                            <VotingComponent 
+                                                key={v?.args[2]}
+                                                owner={v?.args[0]}
+                                                pair={v?.args[2]}
+                                                message={v?.args[1]}
+                                                crowdfundingContract={pair}
+                                                timeLimit={v?.args[3]}
+                                            />
+                                        )
+                                    })}
+                                    </div>
+                                )}
                             </div>
                         </CustomTabPanel>
 

@@ -2,7 +2,7 @@
 import { ethers } from "ethers";
 import { useEffect, useState } from "react"
 import crowdfundingAbi from "../../../utils/Crowdfunding.json"
-import { from, gql, useQuery } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 import CrowdfundingComponent from "../../components/CrowdfundingComponent"
 import { CircularProgress } from "@mui/material";
 
@@ -33,12 +33,12 @@ export default function Page({params}) {
     }); 
 
     async function getCrowdfundingData() {
-        const newProvider = new ethers.providers.WebSocketProvider("wss://eth-sepolia.g.alchemy.com/v2/jJIBH9hHaXDMrtMz5YWJlQvBSTb_aMnk")
+        const newProvider = new ethers.providers.WebSocketProvider("wss://eth-sepolia.g.alchemy.com/v2/vbAE015OkuKDg-T6JKEvXOmpYJuuJ8eN")
         const contractProvider = new ethers.Contract(id, crowdfundingAbi, newProvider)
-        
+        console.log(contractProvider)
         const filterDonations = contractProvider.filters.Donation()
         const eventsDonations = await contractProvider.queryFilter(filterDonations)
-
+    
         const filterWithdraws = contractProvider.filters.UserWithdraw()
         const eventsWithdraws = await contractProvider.queryFilter(filterWithdraws)
 
@@ -51,10 +51,8 @@ export default function Page({params}) {
     }
 
     useEffect(() => {
-         getCrowdfundingData()
+        getCrowdfundingData()
     },[])
-
-    console.log(contractData)
 
     return (
       <div>

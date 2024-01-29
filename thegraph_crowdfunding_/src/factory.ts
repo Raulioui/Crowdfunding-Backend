@@ -16,9 +16,5 @@ export function handlefundingContractCreated(
   entity.timeLimit = event.params.timeLimit
   entity.imageCid = event.params.imageCid
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
   entity.save()
 }
