@@ -18,7 +18,7 @@ The grant program utilizes quadratic funding to distribute a pool of funds among
 - **Quadratic Funding Distribution**: Funds are distributed to projects based on the quadratic funding formula, ensuring a fair and balanced distribution of the grant pool.
 
 ### Disclaimer
-- For include proyects at the grants and to be accepted as a crowdfunding, the have to be accepted at the queque, for the moment is not centralized the queuqe, but it will be at the future
+- For include proyects at the grants and to be accepted as a crowdfunding, the have to be accepted at the queque, for the moment is not centralized, but it will be at the future
 
 ## Foundry
 
