@@ -20,6 +20,8 @@ The grant program utilizes quadratic funding to distribute a pool of funds among
 ### Disclaimer
 - For include proyects at the grants and to be accepted as a crowdfunding, the have to be accepted at the queque, for the moment is not centralized, but it will be at the future
 
+Examples of the proyects are taken from: https://www.gitcoin.co/
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
