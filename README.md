@@ -40,22 +40,13 @@ To ensure decentralization and avoid spam, **all campaigns and grant submissions
 
 ## Usage
 
-example_workflow:
-  title: "💡 Example Workflow"
-  steps:
-    - "📝 Alice creates a crowdfunding project and submits it to the Queque contract."
-    - "✅ Bob and Carol (multisig owners) approve the request."
-    - "🚀 The project contract is deployed, and donations can begin."
-    - "🎓 Alice also submits her project to a grant program."
-    - "🤝 Community members donate to her project during the grant’s active funding period."
-    - "📊 After the grant round ends, Alice receives a fairly calculated match using quadratic funding."
-  note: "Project structure and flow inspired by real-world use cases like gitcoin.co"
+- 📝 Alice creates a crowdfunding project and submits it to the Queque contract.
+- ✅ Bob and Carol (multisig owners) approve the request.
+- 🚀 The project contract is deployed, and donations can begin.
+- 🎓 Alice also submits her project to a grant program.
+- 🤝 Community members donate to her project during the grant’s active funding period.
+- 📊 After the grant round ends, Alice receives a fairly calculated match using quadratic funding.
 
-quadratic_funding:
-  title: "📐 Quadratic Funding Formula"
-  formula: "(sum of the square roots of individual contributions)²"
-  description: "This mechanism encourages broad-based support and rewards projects that resonate with more people — not just those with wealthy donors."
-  learn_more: "https://finematics.com/quadratic-funding-explained/"
 
 ### Build
 
