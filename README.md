@@ -36,7 +36,6 @@ To ensure decentralization and avoid spam, **all campaigns and grant submissions
 
 ℹ️ *Currently the multisig queues are permissionless, but in future versions we will add an admin DAO or governance layer.*
 
-## 🧱 Architecture
 
 ## Usage
 
