@@ -13,11 +13,11 @@ contract Queque is Deployer {
     */
 
     /// @notice Emitted once a request is emmited
-    /// @param id The id of the proyect
-    /// @param cid The CID of the proyect
-    /// @param target The target of the proyect
-    /// @param timeLimit The time limit of the proyect
-    event ProyectRequested(
+    /// @param id The id of the project
+    /// @param cid The CID of the project
+    /// @param target The target of the project
+    /// @param timeLimit The time limit of the project
+    event ProjectRequested(
         uint8 id,
         address owner,
         bytes32 cid,
@@ -25,24 +25,24 @@ contract Queque is Deployer {
         uint256 timeLimit
     );
 
-    /// @notice Emitted once a proyect has been approved
-    /// @param id The id of the proyect
+    /// @notice Emitted once a project has been approved
+    /// @param id The id of the project
     /// @param confirmationCount The amount of confirmations
     /// @param confirmationsRequired The amount of confirmations required of the queque
-    event ProyectApproved(
+    event ProjectApproved(
         uint8 id,
         uint256 confirmationCount,
         uint256 confirmationsRequired
     );
 
-    /// @notice Emitted once proyect has been executed
-    /// @param id The id of the proyect
+    /// @notice Emitted once project has been executed
+    /// @param id The id of the project
     /// @param pair The address of the crowdfunidng
-    /// @param target The target of the proyect
-    /// @param timeLimit The time limit of the proyect
-    /// @param cid The CID of the proyect
-    /// @param owner The owner of the proyect
-    event ProyectExecuted(
+    /// @param target The target of the project
+    /// @param timeLimit The time limit of the project
+    /// @param cid The CID of the project
+    /// @param owner The owner of the project
+    event ProjectExecuted(
         uint8 id,
         address pair,
         uint256 target,
@@ -58,34 +58,34 @@ contract Queque is Deployer {
     /// @notice Conversion from Gwei to Wei
    uint256 public constant FROM_GWEI_TO_WEI = 1e9;
 
-    /// @notice Amount to request a proyect
+    /// @notice Amount to request a project
    uint256 public constant REQUEST_PRICE = 1e16; // 0.01 ether
 
-    /// @notice Minimum time limit that a proyect can have
+    /// @notice Minimum time limit that a project can have
     uint256 public MIN_TIME_LIMIT = 5 days;
 
-    /// @notice Maximum of owners that a proyect can have
+    /// @notice Maximum of owners that a project can have
     uint constant public MAX_OWNER_COUNT = 5;
 
-    /// @notice All the proyects that have been executed
-    address[] public proyectsExecuted;
+    /// @notice All the projects that have been executed
+    address[] public projectsExecuted;
 
     /// @notice Owners of the queque
     address[] public owners;
 
-    /// @notice Number of confirmations required to execute a proyect
+    /// @notice Number of confirmations required to execute a project
     uint public confirmationsRequired;
 
     /// @notice Checks if a user has is owner
     /// @dev user => isOwner
     mapping(address => bool) public isOwner;
 
-    /// @notice Checks if a user has approved a proyect
-    /// @dev proyectId => owner => isApproved
+    /// @notice Checks if a user has approved a project
+    /// @dev projectId => owner => isApproved
     mapping(uint => mapping(address => bool)) public isApproved;
 
-    /// @notice Proyect data
-    struct Proyect {
+    /// @notice Project data
+    struct Project {
         bytes32 cid;
         uint256 target;
         address owner;
@@ -93,7 +93,7 @@ contract Queque is Deployer {
         bool executed;
     }
 
-    Proyect[] public proyectsInQueque;
+    Project[] public projectsInQueque;
 
     /**
      * @notice Modifiers
@@ -106,24 +106,24 @@ contract Queque is Deployer {
         _;
     }
 
-    /// @notice Modifier to check if proyects exists
-    /// @dev Reverts if the proyect does not exist
-    modifier proyectExist(uint _id) {
-        require(_id < proyectsInQueque.length, "Invalid id");
+    /// @notice Modifier to check if projects exists
+    /// @dev Reverts if the project does not exist
+    modifier projectExist(uint _id) {
+        require(_id < projectsInQueque.length, "Invalid id");
         _;
     }
 
-    /// @notice Modifier to check if a owner already approved a proyect
-    /// @dev Reverts if the owner already approved the proyect
-    modifier proyectNotApprovedByOwner(uint _id) {
+    /// @notice Modifier to check if a owner already approved a project
+    /// @dev Reverts if the owner already approved the project
+    modifier projectNotApprovedByOwner(uint _id) {
         require(!isApproved[_id][msg.sender], "Already approved");
         _;
     }
 
-    /// @notice Modifier to check if a proyects already executed
-    /// @dev Reverts if the proyect  already executed
-    modifier proyectNotExecuted(uint _id) {
-        require(!proyectsInQueque[_id].executed, "Transaction already executed");
+    /// @notice Modifier to check if a projects already executed
+    /// @dev Reverts if the project  already executed
+    modifier projectNotExecuted(uint _id) {
+        require(!projectsInQueque[_id].executed, "Transaction already executed");
         _;
     }
 
@@ -149,10 +149,10 @@ contract Queque is Deployer {
      * @notice External functions
     */
 
-    /// @notice Creates a new request for a proyect
+    /// @notice Creates a new request for a project
     /// @param _qfCid The CID of the crowdffunding data stored in IPFS
-    /// @param _target The target amount of the proyect
-    /// @param _timeLimit The time limit of the proyect
+    /// @param _target The target amount of the project
+    /// @param _timeLimit The time limit of the project
     function createRequest(
         bytes32 _qfCid,
         uint256 _target,
@@ -165,7 +165,7 @@ contract Queque is Deployer {
 
         uint256 target = _target * FROM_GWEI_TO_WEI;
 
-        proyectsInQueque.push(Proyect({
+        projectsInQueque.push(Project({
             cid: _qfCid,
             owner: msg.sender,
             target: target,
@@ -173,7 +173,7 @@ contract Queque is Deployer {
             executed: false
         }));
 
-        emit ProyectRequested(uint8(proyectsInQueque.length - 1), msg.sender, _qfCid, target, _timeLimit);
+        emit ProjectRequested(uint8(projectsInQueque.length - 1), msg.sender, _qfCid, target, _timeLimit);
     }
 
     /// @notice Confirms the crowdfunding request
@@ -181,25 +181,25 @@ contract Queque is Deployer {
     function confirmTransaction(uint _id) 
         external 
         onlyOwner
-        proyectExist(_id) 
-        proyectNotApprovedByOwner(_id)
-        proyectNotExecuted(_id)
+        projectExist(_id) 
+        projectNotApprovedByOwner(_id)
+        projectNotExecuted(_id)
     {
         isApproved[_id][msg.sender] = true;
 
         uint256 confirmationCount = getConfirmationCount(_id);
         
-        emit ProyectApproved(uint8(_id), confirmationCount, confirmationsRequired);
+        emit ProjectApproved(uint8(_id), confirmationCount, confirmationsRequired);
 
         if(confirmationCount >= confirmationsRequired) {
-            Proyect storage crf = proyectsInQueque[_id];
+            Project storage crf = projectsInQueque[_id];
             crf.executed = true;
       
-            address pair = deployCrowdfundingProyect(crf.target, crf.timeLimit, crf.cid, crf.owner);
+            address pair = deployCrowdfundingProject(crf.target, crf.timeLimit, crf.cid, crf.owner);
 
-            proyectsExecuted.push(pair);
+            projectsExecuted.push(pair);
             
-            emit ProyectExecuted(uint8(_id), pair, crf.target, crf.timeLimit, crf.cid, crf.owner);
+            emit ProjectExecuted(uint8(_id), pair, crf.target, crf.timeLimit, crf.cid, crf.owner);
         }
     }
 
@@ -207,7 +207,7 @@ contract Queque is Deployer {
      * @notice Internal functions
     */
 
-    /// @notice Returns the amount of confirmations of a proyect
+    /// @notice Returns the amount of confirmations of a project
     /// @param id The id of the crowdfunding request
     function getConfirmationCount(uint id) internal view returns(uint256) {
         uint confirmationCount;
