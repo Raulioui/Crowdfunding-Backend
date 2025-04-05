@@ -1,39 +1,52 @@
-# Crowdfunding Platform with Grants Programs
+# 🌍 Crowdfunding Platform with Grants Programs
 
-Welcome to the Crowdfunding Platform project! This project is a comprehensive crowdfunding platform that integrates traditional crowdfunding methods with grant programs to support various projects. The platform is built using Solidity and designed to run on Sepolia testnet.
+A fully decentralized crowdfunding protocol integrating **traditional funding** with **quadratic grant programs**, built in **Solidity** and deployed on the **Sepolia testnet**. This platform empowers communities to fund individual campaigns or allocate shared grant pools using quadratic funding mechanics.
 
-## Features
+---
 
-### Traditional Crowdfunding
+## 🚀 Live Demo
 
-The traditional crowdfunding mechanism allows project owners to raise funds by collecting donations from supporters. Key features include:
-- **Donations with Messages**: Supporters can donate funds and include a message with their donation.
-- **Withdrawal Options**: Project owners can withdraw the collected funds once the crowdfunding target is reached. Supporters can also withdraw their funds before the target is reached, with a small penalty fee.
+👉 [quadraticcrowdfunding.vercel.app](https://quadraticcrowdfunding.vercel.app)
 
-### Grant Programs
+---
 
-The grant program utilizes quadratic funding to distribute a pool of funds among various projects based on community support. It includes 3 stages:
-- **Project Requests**: Project owners can request to participate in the grant program by submitting their project details.
-- **Donation Period**: Supporters can donate to their preferred projects during the active funding period.
-- **Quadratic Funding Distribution**: Funds are distributed to projects based on the quadratic funding formula, ensuring a fair and balanced distribution of the grant pool.
+## 📦 Features
 
-### Disclaimer
-- For include proyects at the grants and to be accepted as a crowdfunding, the have to be accepted at the queque, for the moment is not centralized, but it will be at the future
+### 🧱 Traditional Crowdfunding
+- 💸 **Donate with messages**: Supporters can contribute ETH and leave a note.
+- 🧑‍💼 **Campaign ownership**: Creators can withdraw funds once the target is met or the deadline expires.
+- 🔙 **Early withdrawal**: Donators can reclaim funds (with a 5% penalty) if the campaign hasn’t completed.
 
-Examples of the proyects are taken from: https://www.gitcoin.co/
+### 🎓 Grants via Quadratic Funding
+The grant program operates in **three phases**:
+1. **Project Requests**: Creators request to join the grant pool with project metadata (stored on IPFS).
+2. **Donation Period**: Supporters donate to the projects they value most.
+3. **Fair Distribution**: Funds are distributed using the quadratic funding algorithm:
+   > Matching is proportional to the square of the sum of square roots of individual contributions.
 
-## Foundry
+This ensures a **more democratic and fair** allocation of grant resources.
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+---
 
-Foundry consists of:
+## 🔐 Governance (Multisig Queues)
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+To ensure decentralization and avoid spam, **all campaigns and grant submissions must be approved via multisig**:
+- ✅ Queque.sol: Crowdfunding campaigns must be approved by a quorum of trusted owners.
+- ✅ GrantQueque.sol: Projects entering grants must pass through a similar multisig flow.
 
-## Documentation
+ℹ️ *Currently the multisig queues are permissionless, but in future versions we will add an admin DAO or governance layer.*
+
+## 🧱 Architecture
+
+Crowdfunding/
+├── CrowdFunding.sol       # Traditional crowdfunding campaign
+├── Queque.sol             # Campaign approval queue (multisig)
+├── Deployer.sol           # Contract factory logic for deployments
+├── FactoryV2.sol          # Grant factory (permissioned owner)
+├── Grant.sol              # Grant pool with quadratic funding
+├── GrantQueque.sol        # Multisig queue for grant entries
+└── test/
+    └── FactoryTest.t.sol  # Full suite of Forge tests
 
 https://book.getfoundry.sh/
 
